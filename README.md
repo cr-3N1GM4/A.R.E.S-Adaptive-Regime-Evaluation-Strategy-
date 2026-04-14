@@ -1,9 +1,20 @@
 # A.R.E.S-Adaptive-Regime-Evaluation-Strategy-
 This project builds a regime-aware trading system using quantitative factors, ML, and reinforcement learning. It selects stocks, detects market conditions, and uses a PPO agent to trade adaptively, aiming for consistent returns with strong risk management and low drawdowns.
 
+Here is the complete, raw Markdown code for your README. You can easily copy it using the copy button on the code block below.
+Markdown
+
+# Regime-Conditioned PPO Intraday Trading System
+
+A research-grade, lookahead-free reinforcement learning trading environment optimized for intraday equity trading. This system pairs a custom Gymnasium environment with a Proximal Policy Optimization (PPO) agent, utilizing an online Gaussian Hidden Markov Model (HMM) and XGBoost for dynamic market regime detection. 
+
+Developed with a focus on systematic alpha generation and quantitative finance principles, the pipeline includes a cross-sectional stock screener specifically tuned for Indian equities (NSE) to dynamically select the highest probability assets for the RL agent to trade daily.
+
+---
+
 ## 🚀 Key Features
 
-* **Strict Lookahead-Free Execution:** A mathematically sound "close-to-close" execution model. All features are rigorously pre-shifted. The agent observes data up to $t-1$ to make a decision executed at the close of $t$.
+* **Strict Lookahead-Free Execution:** A mathematically sound "close-to-close" execution model. All features are rigorously pre-shifted. The agent observes data up to `t-1` to make a decision executed at the close of `t`.
 * **Dual-Model Regime Detection:** * **HMM:** An online, forward-algorithm Gaussian HMM calculates real-time probabilities of high-volatility/risky market states.
     * **XGBoost:** Predicts localized concurrent volatility regimes (categorized into quantiles) without future data leakage.
 * **Deep Feature Engineering:** Computes over 50 technical and microstructural features, including Johnny Ribbon regimes, multi-iteration Heikin Ashi, KAMA, VWAP deviation, and Hurst exponents.
@@ -14,7 +25,7 @@ This project builds a regime-aware trading system using quantitative factors, ML
 
 ## 🏗️ System Architecture
 
-1. **Universe Selection (`StockSelection.py`):** Downloads historical data via `yfinance`, calculates z-scored fundamental and technical metrics, and builds a JSON map of the top $K$ assets to trade for every forward business day.
+1. **Universe Selection (`StockSelection.py`):** Downloads historical data via `yfinance`, calculates z-scored fundamental and technical metrics, and builds a JSON map of the top assets to trade for every forward business day.
 2. **Data Preparation & Indicator Computation (`RL.py`):** Resamples 1-minute data to customizable intraday frequencies (e.g., 2-minute candles) and processes the complex feature space.
 3. **Regime Training:** Isolates the first 10% of historical data chronologically to train the HMM and XGBoost models, completely separated from the RL training phase.
 4. **Agent Training:** The next 50% of the timeline is used to train the Stable-Baselines3 PPO agent across parallelized SubprocVecEnv/DummyVecEnv instances. 
@@ -30,7 +41,7 @@ Clone the repository and install the required scientific and quantitative librar
 
 ```bash
 pip install numpy pandas yfinance torch stable-baselines3 gym gymnasium xgboost hmmlearn scipy tqdm matplotlib "kagglehub[pandas-datasets]"
-```
+
 💾 Data Acquisition: Historical 1-Minute Data
 
 While StockSelection.py utilizes yfinance for broader daily metrics, historical 1-minute intraday data is restricted on standard free APIs. You can easily source high-quality 1-minute Nifty 50 data directly from Kaggle into your /data directory using kagglehub.
@@ -242,23 +253,13 @@ This code is strictly designed to eliminate lookahead bias via the following mec
 
     Feature Shifting: All indicators are shifted by 1 bar before the agent sees them.
 
-    Decision Segregation: The decision at time t uses data exclusively from t−1. The agent never sees the current bar's indicators before acting.
+    Decision Segregation: The decision at time t uses data exclusively from t-1. The agent never sees the current bar's indicators before acting.
 
     Close-to-Close Execution: A consistent, realistic execution model.
 
     Chronological Splits: Train and test datasets are strictly time-ordered.
 
     Verification Suite: Run python RL.py verify TICKER to mathematically prove the integrity of the environment.
-
-🔧 Troubleshooting
-
-    "No data found for TICKER": Ensure TICKER_minute.csv or TICKER.csv exists in the folder and contains the correct OHLCV columns.
-
-    "Volume column missing": Your CSV must have a Volume column. If missing, you can add a dummy column with a constant value (e.g., 100000).
-
-    Training is slow: Reduce PARAMS['EPISODES'] to 500,000 for faster training. Ensure CUDA is available via torch.cuda.is_available().
-
-    Model not improving: Experiment with different stop-loss/trailing-stop values, increase training episodes, or verify your data quality (ensure no gaps and proper OHLCV structures).
 
 Author: Charvit Rajani
 
